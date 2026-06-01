@@ -3,7 +3,7 @@
 import { useRef, useState, useCallback } from 'react'
 import ReactCrop, { centerCrop, makeAspectCrop, type Crop, type PixelCrop } from 'react-image-crop'
 import 'react-image-crop/dist/ReactCrop.css'
-import { RotateCcw, ZoomIn, ZoomOut } from 'lucide-react'
+import { RotateCcw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const OUTPUT_PX   = 400

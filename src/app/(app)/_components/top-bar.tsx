@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Search, Plus } from 'lucide-react'
 import { NotificationBell, type PendingInvite, type GroupExpenseNotif } from './notification-bell'
 import { SearchPalette } from './search-palette'
@@ -81,7 +82,13 @@ export function TopBar({ coolingItems, invites, groupExpenses, userInitial, user
           aria-label="Profile"
         >
           {userAvatarUrl ? (
-            <img src={userAvatarUrl} alt="" className="w-full h-full object-cover" />
+            <Image
+              src={userAvatarUrl}
+              alt=""
+              width={40}
+              height={40}
+              className="w-full h-full object-cover"
+            />
           ) : (
             userInitial
           )}

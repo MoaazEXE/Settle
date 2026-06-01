@@ -1,5 +1,3 @@
-this needs to be updated...
-
 # Settle — The money you didn't spend
 
 A personal finance app that **intervenes before the money leaves**. Log temptations, let them cool, and celebrate what you didn't spend — solo or with a group.
@@ -11,8 +9,8 @@ Built for the Shortcut Asia Internship Challenge 2026 (23 May – 2 June).
 | Layer     | Choice                                |
 | --------- | ------------------------------------- |
 | Framework | Next.js 16 (App Router) + TypeScript  |
-| Database  | Supabase (Postgres + Auth + Realtime) |
-| ORM       | Prisma 7                              |
+| Database  | Supabase (Postgres + Auth + Storage)  |
+| ORM       | Prisma 5                              |
 | UI        | Tailwind CSS v4 + shadcn/ui           |
 | Charts    | Recharts                              |
 | Tests     | Vitest                                |
@@ -32,15 +30,27 @@ npm install
 cp .env.example .env
 ```
 
-Fill in `.env` with your Supabase project credentials (see `.env.example` for all required keys).
+Fill in `.env` with your Supabase project credentials. All 6 keys in `.env.example` are required — the app will not boot without `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `DATABASE_URL`, `DIRECT_URL`, and `NEXT_PUBLIC_APP_URL`. `SUPABASE_SERVICE_ROLE_KEY` is required for account deletion and avatar upload.
 
 ### 3. Push the database schema
 
 ```bash
-npx prisma migrate dev --name init
+npx prisma db push
 ```
 
-### 4. Start the dev server
+This project does not currently keep a `prisma/migrations/` history — schema state is driven by `prisma/schema.prisma` and `db push`. Initializing a proper migration history is on the AUDIT.md list before going to real production.
+
+### 4. Apply Row-Level Security
+
+After the first `db push`, run `prisma/rls.sql` once in the Supabase SQL editor (Dashboard → SQL Editor → New query → paste & run). This file installs:
+
+- the `handle_new_user` trigger that creates a `User` row on signup,
+- RLS policies on every user-facing table,
+- deny-by-default RLS on the server-only `RateLimit` table.
+
+The Prisma runtime connection bypasses RLS (it's the Postgres owner), so these policies are defense-in-depth that protect direct REST / realtime access via the anon key. **Application-layer guards in `src/app/actions/*` are the real auth boundary.**
+
+### 5. Start the dev server
 
 ```bash
 npm run dev
@@ -48,13 +58,23 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-### 5. Run unit tests
+### 6. Run unit tests
 
 ```bash
 npm test
 ```
 
-Tests cover the three pure core modules: `cooling/`, `debt/`, and `timecost/`.
+Tests cover the pure core modules (`cooling/`, `debt/`, `timecost/`, `savings/`, `milestones/`) and the `groups` repo.
+
+## Production deployment (Vercel)
+
+Before promoting to prod, confirm:
+
+1. All env vars from `.env.example` set in **Vercel → Project Settings → Environment Variables**. `SUPABASE_SERVICE_ROLE_KEY` must NOT have the `NEXT_PUBLIC_` prefix; scope it to **Production** only (not Preview, if you accept PRs from forks).
+2. **Supabase → Authentication → URL Configuration**: Site URL = `https://<your-domain>`; Redirect URLs include `https://<your-domain>/auth/callback`.
+3. **Supabase → Authentication → Providers → Google**: client ID + secret set, Google Cloud OAuth client lists `https://<project-ref>.supabase.co/auth/v1/callback` as authorized redirect URI.
+4. `prisma/rls.sql` ran successfully against the production database (verify with `SELECT * FROM pg_policies WHERE schemaname = 'public';`).
+5. Avatar storage bucket `avatars` exists and is public-read.
 
 ## Architecture
 
@@ -79,3 +99,4 @@ src/
 - **Cooling is computed, not counted** — `coolingUntil > now()` on every read; closing a tab can't break the state.
 - **Savings totals are derived, never stored** — sum of SKIPPED items on read keeps them always-correct.
 - **Core logic is framework-free** — `src/core/` has zero Next.js or Prisma imports, making it trivially testable and portable to a future mobile API.
+- **Auth boundary is the server action**, not RLS. Every server action calls `getCurrentUser()` (which JWT-verifies via Supabase) and then enforces ownership/membership in code. RLS is a defense-in-depth net behind that.

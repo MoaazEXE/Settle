@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { getCurrentUser } from '@/lib/supabase/server'
 import { usersRepo } from '@/data/users.repo'
 import { CurrencyProvider } from '@/lib/currency-context'
+import { ONBOARDING_REQUIRED_FROM } from '@/lib/constants'
 import { LogModalProvider } from './_components/log-modal-context'
 import { ResolveSheetProvider } from './_components/resolve-sheet-context'
 import { NavData } from './_components/nav-data'
@@ -12,6 +13,7 @@ import { TopBarSkeleton } from './_components/top-bar-skeleton'
 import { LogSheetData } from './_components/log-sheet-data'
 import { ResolveSheetData } from './_components/resolve-sheet-data'
 import { LogFab } from './_components/log-fab'
+import { AppRealtimeData } from './_components/app-realtime-data'
 
 /**
  * Layout pays for ONE thing only — a cookie-local auth check (no DB).
@@ -45,8 +47,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const initial = name.charAt(0).toUpperCase()
   // Users created before the onboarding feature launched are grandfathered in.
   // Only redirect new users (created after the launch date) who haven't completed it.
-  const ONBOARDING_LAUNCH = new Date('2026-05-27T00:00:00Z')
-  if (!dbUser.onboardingCompletedAt && dbUser.createdAt >= ONBOARDING_LAUNCH) {
+  if (!dbUser.onboardingCompletedAt && dbUser.createdAt >= ONBOARDING_REQUIRED_FROM) {
     redirect('/onboarding')
   }
   const currency = dbUser.currency
@@ -77,6 +78,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </Suspense>
         <Suspense fallback={null}>
           <ResolveSheetData />
+        </Suspense>
+
+        {/* App-wide realtime — keeps the bell, dashboard, cooling & groups live. */}
+        <Suspense fallback={null}>
+          <AppRealtimeData />
         </Suspense>
       </ResolveSheetProvider>
     </LogModalProvider>

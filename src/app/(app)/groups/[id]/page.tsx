@@ -62,7 +62,6 @@ export default async function GroupPage({ params }: PageProps) {
   if (!group) notFound()
 
   const expenses = group.expenses
-  const memberCount = group.members.length
   const balances = computeBalances(expenses)
   const savedTogetherCents = group.items.reduce((sum, i) => sum + i.amountCents, 0)
 

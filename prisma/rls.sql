@@ -36,12 +36,15 @@ CREATE TRIGGER on_auth_user_created
 -- -----------------------------------------------------------------------------
 -- 2. Enable RLS on every user-owned table
 -- -----------------------------------------------------------------------------
-ALTER TABLE "User"         ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "Item"         ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "Group"        ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "GroupMember"  ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "Expense"      ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "ExpenseShare" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "User"               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Item"               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Group"              ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "GroupMember"        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Expense"            ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "ExpenseShare"       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "GuestMember"        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "GuestExpenseShare"  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "RateLimit"          ENABLE ROW LEVEL SECURITY;
 
 -- -----------------------------------------------------------------------------
 -- 3. User table
@@ -164,3 +167,76 @@ CREATE POLICY "expense_share_self_write" ON "ExpenseShare"
   FOR ALL
   USING     (auth.uid()::text = "userId")
   WITH CHECK (auth.uid()::text = "userId");
+
+-- -----------------------------------------------------------------------------
+-- 9. GuestMember table
+--    Any active member of the host group can see the group's guests.
+--    Only the user who added a guest, or the group owner, can mutate it.
+--    (Application enforces the same rule in groupsRepo.removeGuestMember —
+--    these policies are defense in depth in case anon traffic ever reaches the
+--    table via PostgREST or realtime subscriptions.)
+-- -----------------------------------------------------------------------------
+DROP POLICY IF EXISTS "guest_member_select" ON "GuestMember";
+CREATE POLICY "guest_member_select" ON "GuestMember"
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM "GroupMember"
+      WHERE "GroupMember"."groupId" = "GuestMember"."groupId"
+        AND "GroupMember"."userId" = auth.uid()::text
+        AND "GroupMember"."status" = 'ACTIVE'
+    )
+  );
+
+DROP POLICY IF EXISTS "guest_member_insert" ON "GuestMember";
+CREATE POLICY "guest_member_insert" ON "GuestMember"
+  FOR INSERT
+  WITH CHECK (
+    auth.uid()::text = "addedBy"
+    AND EXISTS (
+      SELECT 1 FROM "GroupMember"
+      WHERE "GroupMember"."groupId" = "GuestMember"."groupId"
+        AND "GroupMember"."userId" = auth.uid()::text
+        AND "GroupMember"."status" = 'ACTIVE'
+    )
+  );
+
+DROP POLICY IF EXISTS "guest_member_delete" ON "GuestMember";
+CREATE POLICY "guest_member_delete" ON "GuestMember"
+  FOR DELETE
+  USING (
+    auth.uid()::text = "addedBy"
+    OR EXISTS (
+      SELECT 1 FROM "Group"
+      WHERE "Group".id = "GuestMember"."groupId"
+        AND "Group"."createdBy" = auth.uid()::text
+    )
+  );
+
+-- -----------------------------------------------------------------------------
+-- 10. GuestExpenseShare table
+--     Members of the host group can read; no anon writes allowed
+--     (the server creates guest shares atomically with the parent expense
+--     using the service role).
+-- -----------------------------------------------------------------------------
+DROP POLICY IF EXISTS "guest_expense_share_member_select" ON "GuestExpenseShare";
+CREATE POLICY "guest_expense_share_member_select" ON "GuestExpenseShare"
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1
+        FROM "Expense" e
+        JOIN "GroupMember" gm ON gm."groupId" = e."groupId"
+       WHERE e.id = "GuestExpenseShare"."expenseId"
+         AND gm."userId" = auth.uid()::text
+         AND gm."status" = 'ACTIVE'
+    )
+  );
+
+-- -----------------------------------------------------------------------------
+-- 11. RateLimit table
+--     Server-only counter; no anon access at all. RLS-on + no policy = deny
+--     everything for non-service-role connections, while the Prisma server
+--     connection (the only writer) bypasses RLS as the Postgres owner.
+-- -----------------------------------------------------------------------------
+-- (Intentionally no policies — deny by default.)

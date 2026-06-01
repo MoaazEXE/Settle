@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { Home, Clock, Users, Wallet, LogOut } from 'lucide-react'
 import { signOut } from '@/app/actions/auth'
@@ -105,7 +106,7 @@ export function Nav({ name, email, initial, avatarUrl, savedCents, coolingCount,
         <div className="flex items-center gap-2.5 rounded-md bg-card shadow-card w-full md:flex-col md:p-2 lg:flex-row lg:px-3 lg:py-2.5">
           <Link href="/profile" title={name} className="flex items-center gap-2.5 lg:flex-1 min-w-0 hover:opacity-80 transition-opacity">
             {avatarUrl ? (
-              <img src={avatarUrl} alt={name} className="flex-shrink-0 w-8 h-8 rounded-full object-cover" />
+              <Image src={avatarUrl} alt={name} width={32} height={32} className="flex-shrink-0 w-8 h-8 rounded-full object-cover" />
             ) : (
               <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-semibold">
                 {initial}

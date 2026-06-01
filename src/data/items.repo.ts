@@ -2,6 +2,7 @@ import { cache } from 'react'
 import { unstable_cache } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import type { ItemStatus } from '@/types'
+import { SNOOZE_MINUTES_DEFAULT } from '@/lib/constants'
 
 /**
  * Fetches every item for a user once per request and partitions by status.
@@ -169,7 +170,7 @@ export const itemsRepo = {
       .map(x => x.i)
   },
 
-  async snooze(id: string, userId: string, minutes = 1440) {
+  async snooze(id: string, userId: string, minutes = SNOOZE_MINUTES_DEFAULT) {
     const item = await prisma.item.findUniqueOrThrow({
       where: { id, userId },
       select: { coolingUntil: true },

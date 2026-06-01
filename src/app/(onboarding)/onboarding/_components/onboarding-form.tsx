@@ -6,6 +6,7 @@ import { normalizeUsername } from '@/lib/username'
 import { StepUsername } from './step-username'
 import { StepCurrency } from './step-currency'
 import { StepIncome } from './step-income'
+import { DEFAULT_CURRENCY } from '@/lib/constants'
 
 interface FormState {
   step: 0 | 1 | 2
@@ -43,7 +44,7 @@ export function OnboardingForm({ suggestedUsername }: Props) {
   const [formState, dispatch] = useReducer(reducer, {
     step: 0,
     username: suggestedUsername,
-    currency: 'MYR',
+    currency: DEFAULT_CURRENCY,
     monthlyIncome: '',
     weeklyHours: '',
   })

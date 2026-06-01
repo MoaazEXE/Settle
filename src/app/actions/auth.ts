@@ -3,7 +3,7 @@
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
-import { ensureUserRecord } from '@/lib/ensure-user'
+import { ensureUserRecord, AccountEmailCollisionError } from '@/lib/ensure-user'
 import { consume } from '@/lib/rate-limit'
 
 async function getClientIp(): Promise<string> {
@@ -31,8 +31,12 @@ export async function signIn(
 
   try {
     if (data.user) await ensureUserRecord(data.user)
-  } catch {
-    // Non-fatal: user row may already exist or will be created on next request
+  } catch (e) {
+    if (e instanceof AccountEmailCollisionError) {
+      await supabase.auth.signOut().catch(() => {})
+      return e.message
+    }
+    // Other failures are non-fatal: row may already exist or will be created on next request
   }
 
   redirect('/dashboard')
@@ -72,8 +76,12 @@ export async function signUp(
   if (data.session && data.user) {
     try {
       await ensureUserRecord(data.user)
-    } catch {
-      // Non-fatal
+    } catch (e) {
+      if (e instanceof AccountEmailCollisionError) {
+        await supabase.auth.signOut().catch(() => {})
+        return e.message
+      }
+      // Other failures are non-fatal
     }
     redirect('/dashboard')
   }
@@ -95,19 +103,8 @@ export async function deleteAccount(): Promise<string | null> {
   if (!serviceKey) return 'Account deletion is not configured. Contact support.'
 
   try {
-    const { verifyAuthUser, getCurrentUser } = await import('@/lib/supabase/server')
-    // Try strict (network) verification first; on network failure fall back to
-    // the cookie-derived session, which the proxy has already gated. Without
-    // this fallback, transient Supabase Auth latency surfaces as a misleading
-    // "Not authenticated" toast even when the user is fully signed in.
-    let user: { id: string } | null = null
-    try {
-      user = await verifyAuthUser()
-    } catch (verifyErr) {
-      const { logError } = await import('@/lib/log-error')
-      await logError('action:deleteAccount:verify:network', {}, verifyErr)
-      user = await getCurrentUser()
-    }
+    const { getCurrentUser } = await import('@/lib/supabase/server')
+    const user = await getCurrentUser()
     if (!user) return 'Not authenticated.'
     userId = user.id
   } catch (err) {

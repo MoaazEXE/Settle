@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { BrandMark } from '@/components/ui/brand-mark'
 import { Plus, Clock, Check, Users } from 'lucide-react'

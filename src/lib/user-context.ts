@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { getCurrentUser } from '@/lib/supabase/server'
 import { usersRepo } from '@/data/users.repo'
 import type { TimeCostInput } from '@/types'
+import { DEFAULT_CURRENCY, DEFAULT_COOLING_PERIOD } from '@/lib/constants'
 
 export type TimeCostContext = Omit<TimeCostInput, 'amountCents'>
 
@@ -54,8 +55,8 @@ export const getUserContext = cache(async (): Promise<UserContext | null> => {
     avatarUrl: dbUser?.avatarUrl ?? null,
     username: dbUser?.username ?? null,
     usernameUpdatedAt: dbUser?.usernameUpdatedAt ?? null,
-    defaultCoolingPeriod: dbUser?.defaultCoolingPeriod ?? '1d',
-    currency: dbUser?.currency ?? 'MYR',
+    defaultCoolingPeriod: dbUser?.defaultCoolingPeriod ?? DEFAULT_COOLING_PERIOD,
+    currency: dbUser?.currency ?? DEFAULT_CURRENCY,
     timeCostContext,
   }
 })

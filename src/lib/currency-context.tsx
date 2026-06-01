@@ -2,8 +2,9 @@
 
 import { createContext, useContext } from 'react'
 import { fmtCurrency } from './formatters'
+import { DEFAULT_CURRENCY } from '@/lib/constants'
 
-const CurrencyContext = createContext<string>('MYR')
+const CurrencyContext = createContext<string>(DEFAULT_CURRENCY)
 
 export function CurrencyProvider({
   currency,

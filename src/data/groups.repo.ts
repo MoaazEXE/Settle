@@ -2,6 +2,15 @@ import { cache } from 'react'
 import { unstable_cache } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 
+/**
+ * Hard ceiling on the per-group expense rows we materialize. Balance math is
+ * still accurate for any realistic group within this window; if a real
+ * production group ever bumps against the cap, the activity feed will need
+ * proper pagination (incremental fetch) and `computeBalances` will need to
+ * shift to a server-side aggregate. Tracked in AUDIT.md.
+ */
+const GROUP_EXPENSE_PAGE_SIZE = 200
+
 const groupInclude = {
   members: {
     where: { status: 'ACTIVE' as const },
@@ -15,6 +24,7 @@ const groupInclude = {
   expenses: {
     where: { status: 'COMMITTED' as const },
     orderBy: { createdAt: 'desc' as const },
+    take: GROUP_EXPENSE_PAGE_SIZE,
     include: {
       shares: true,
       guestShares: {
@@ -274,6 +284,15 @@ export const groupsRepo = {
       { tags: [`groups-user-${userId}`] },
     )(),
   ),
+
+  /** Active group IDs for a user — used to scope the global realtime subscription. */
+  async findActiveGroupIdsByUser(userId: string): Promise<string[]> {
+    const rows = await prisma.groupMember.findMany({
+      where: { userId, status: 'ACTIVE' },
+      select: { groupId: true },
+    })
+    return rows.map(r => r.groupId)
+  },
 
   async requireActiveMembership(groupId: string, userId: string): Promise<void> {
     const member = await prisma.groupMember.findUnique({

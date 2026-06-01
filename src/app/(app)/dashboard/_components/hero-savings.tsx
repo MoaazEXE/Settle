@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import type { SavingsDataPoint } from '@/core/savings/savings'
-import { useFmt, useCurrency } from '@/lib/currency-context'
+import { useFmt } from '@/lib/currency-context'
 import { Card } from '@/components/ui/card'
 
 interface Props {

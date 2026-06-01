@@ -8,6 +8,7 @@ import { resplitAll } from '@/app/actions/groups'
 import { Avatar } from '@/components/ui/avatar'
 import { Card } from '@/components/ui/card'
 import { fmtCurrency } from '@/lib/formatters'
+import { DEFAULT_CURRENCY } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { GroupBackLink } from '../../_components/group-back-link'
 import { ApplyResplitButton } from './_components/apply-button'
@@ -21,7 +22,7 @@ export default async function ResplitAllPage({ params }: PageProps) {
   const ctx = await getUserContext()
   if (!ctx) redirect('/login')
 
-  const currency = ctx.currency ?? 'MYR'
+  const currency = ctx.currency ?? DEFAULT_CURRENCY
   const fmt = (cents: number, decimals: 0 | 2 = 2) => fmtCurrency(cents, currency, decimals)
   const group = await groupsRepo.findByIdDeep(id, ctx.id)
   if (!group) notFound()

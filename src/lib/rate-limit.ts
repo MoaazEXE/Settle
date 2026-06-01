@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { ValidationError } from '@/lib/form-data'
+import { logError } from '@/lib/log-error'
 
 /**
  * Sliding-window rate limiter backed by Postgres.
@@ -32,6 +33,9 @@ export async function consume(key: string, limit: number, windowSec: number): Pr
 
 /** Convenience: throws ValidationError if the limit is exceeded. */
 export async function guard(key: string, limit: number, windowSec: number): Promise<void> {
-  const allowed = await consume(key, limit, windowSec).catch(() => true) // fail open to avoid blocking on DB error
+  const allowed = await consume(key, limit, windowSec).catch((err) => {
+    logError('rate-limit-guard', { key, limit, windowSec }, err)
+    return true // fail open to avoid blocking on DB error
+  })
   if (!allowed) throw new ValidationError('Too many requests — slow down.')
 }

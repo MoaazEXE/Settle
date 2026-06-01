@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import {
   ArrowLeft,
   ArrowRight,
@@ -45,7 +46,6 @@ interface Props {
   initial: string
   avatarUrl: string | null
   username: string | null
-  usernameUpdatedAt: Date | null
   memberSince: Date | string
   savedCents: number
   skippedCount: number
@@ -98,7 +98,6 @@ export function ProfileShell({
   initial,
   avatarUrl,
   username,
-  usernameUpdatedAt,
   memberSince,
   savedCents,
   skippedCount,
@@ -185,9 +184,12 @@ export function ProfileShell({
             <div className="flex items-start gap-4 lg:gap-8">
               <div className="relative flex-shrink-0">
                 {avatarUrl ? (
-                  <img
+                  <Image
                     src={avatarUrl}
                     alt={name}
+                    width={132}
+                    height={132}
+                    sizes="(min-width: 1024px) 132px, 80px"
                     className="w-20 h-20 lg:w-[132px] lg:h-[132px] rounded-full object-cover shadow-avatar-hero"
                   />
                 ) : (

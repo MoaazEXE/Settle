@@ -16,6 +16,7 @@ import {
 import { guard } from '@/lib/rate-limit'
 import { CATEGORIES, DEFAULT_CATEGORY } from '@/core/categories/categories'
 import type { CoolingUnit } from '@/types'
+import { SNOOZE_MINUTES_DEFAULT } from '@/lib/constants'
 
 const VALID_CATEGORY_IDS = new Set(CATEGORIES.map(c => c.id))
 
@@ -130,7 +131,7 @@ export async function editCoolingItem(
   return typeof result === 'string' ? result : null
 }
 
-export async function snoozeItem(id: string, minutes = 1440) {
+export async function snoozeItem(id: string, minutes = SNOOZE_MINUTES_DEFAULT) {
   const userId = await getAuthUserId()
   await itemsRepo.snooze(id, userId, minutes)
   updateTag(`items-user-${userId}`)

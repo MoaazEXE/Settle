@@ -1,4 +1,5 @@
 import { parseAmountToCents } from '@/lib/money'
+import { MAX_AMOUNT_CENTS } from '@/lib/constants'
 
 /**
  * Tiny typed FormData accessors. Keeps Server Actions honest without
@@ -32,7 +33,7 @@ export function getCents(fd: FormData, key: string): number | null {
 export function getRequiredCents(fd: FormData, key: string): number {
   const c = getCents(fd, key)
   if (c == null || c <= 0) throw new ValidationError('Enter a valid amount.')
-  if (c > 100_000_000) throw new ValidationError('Amount is too large (max RM 1,000,000).')
+  if (c > MAX_AMOUNT_CENTS) throw new ValidationError('Amount is too large (max RM 1,000,000).')
   return c
 }
 

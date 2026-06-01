@@ -155,6 +155,7 @@ model GuestMember {
   expenseShares GuestExpenseShare[]
 
   @@index([groupId])
+  @@index([addedBy])
 }
 
 model GuestExpenseShare {

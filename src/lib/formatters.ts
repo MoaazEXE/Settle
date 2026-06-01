@@ -1,3 +1,5 @@
+import { DEFAULT_CURRENCY } from '@/lib/constants'
+
 export const CURRENCIES = [
   { code: 'MYR', symbol: 'RM',  label: 'Malaysian Ringgit', locale: 'en-MY' },
   { code: 'USD', symbol: '$',   label: 'US Dollar',          locale: 'en-US' },
@@ -32,7 +34,7 @@ export function fmtCurrency(cents: number, currency: string, decimals: 0 | 2 = 2
 
 /** Format cents as Malaysian Ringgit (default currency). decimals=2 for totals, 0 for list rows. */
 export function fmtRM(cents: number, decimals: 0 | 2 = 2): string {
-  return fmtCurrency(cents, 'MYR', decimals)
+  return fmtCurrency(cents, DEFAULT_CURRENCY, decimals)
 }
 
 /** Human-readable countdown from milliseconds remaining. */

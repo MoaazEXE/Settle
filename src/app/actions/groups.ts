@@ -446,6 +446,24 @@ async function requireExpenseAccess(expenseId: string, userId: string) {
   return expense
 }
 
+/**
+ * Stricter check for mutating operations on an expense — the actor must be
+ * the original payer (or the group's creator, as a moderation backstop).
+ * Use this for edit/delete/resplit of a single expense. Read access for
+ * group members is granted by `requireExpenseAccess` instead.
+ */
+async function requireExpenseMutator(expenseId: string, userId: string) {
+  const expense = await requireExpenseAccess(expenseId, userId)
+  const isPayer = expense.payerId === userId
+  const isOwner = await prisma.group
+    .findUnique({ where: { id: expense.groupId }, select: { createdBy: true } })
+    .then(g => g?.createdBy === userId)
+  if (!isPayer && !isOwner) {
+    throw new ValidationError('Only the payer or the group owner can change this activity.')
+  }
+  return expense
+}
+
 export async function editExpense(
   _prevState: string | null,
   formData: FormData,
@@ -458,7 +476,7 @@ export async function editExpense(
     const resplit = formData.get('resplit') === '1'
 
     const userId = await getAuthUserId()
-    const expense = await requireExpenseAccess(expenseId, userId)
+    const expense = await requireExpenseMutator(expenseId, userId)
     groupIdForRevalidate = expense.groupId
 
     if (resplit) {
@@ -560,7 +578,7 @@ export async function editExpense(
 export async function deleteExpense(formData: FormData): Promise<void> {
   const expenseId = getRequiredString(formData, 'expenseId')
   const userId = await getAuthUserId()
-  const expense = await requireExpenseAccess(expenseId, userId)
+  const expense = await requireExpenseMutator(expenseId, userId)
   await prisma.expense.delete({ where: { id: expenseId } })
   await revalidateGroupMembers(expense.groupId)
 }
@@ -568,7 +586,7 @@ export async function deleteExpense(formData: FormData): Promise<void> {
 export async function resplitExpense(formData: FormData): Promise<void> {
   const expenseId = getRequiredString(formData, 'expenseId')
   const userId = await getAuthUserId()
-  const expense = await requireExpenseAccess(expenseId, userId)
+  const expense = await requireExpenseMutator(expenseId, userId)
 
   const memberIds = expense.group.members.map(m => m.userId)
   const shares = equalSplit(expense.amountCents, memberIds, expense.payerId)

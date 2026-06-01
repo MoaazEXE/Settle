@@ -15,7 +15,9 @@ export function useGroupRealtime(groupId: string) {
   // Stable callback ref — avoids tearing down/recreating the channel when
   // Next.js swaps the router object reference between renders.
   const refreshRef = useRef(router.refresh)
-  refreshRef.current = router.refresh
+  useEffect(() => {
+    refreshRef.current = router.refresh
+  }, [router])
 
   useEffect(() => {
     if (!groupId) return
@@ -33,14 +35,15 @@ export function useGroupRealtime(groupId: string) {
       }
     }
 
+    // Expense changes for this group are handled by the app-wide useAppRealtime
+    // subscription (it listens to Expense for every active group). This hook
+    // only adds the per-group signals the global one can't filter for:
+    // GroupMember/GuestMember changes by *other* members of the open group.
     const supabase = createClient()
     const ch = supabase
       .channel(`group-${groupId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'Expense', filter: `groupId=eq.${groupId}` }, () => refreshRef.current())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'GroupMember', filter: `groupId=eq.${groupId}` }, () => refreshRef.current())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'GuestMember', filter: `groupId=eq.${groupId}` }, () => refreshRef.current())
-      // ExpenseShare has no groupId column — Supabase realtime can't filter it by group.
-      // Expense changes (which always accompany share mutations) already trigger a refresh above.
       .subscribe()
 
     channels.set(groupId, { ch, refCount: 1 })

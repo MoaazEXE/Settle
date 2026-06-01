@@ -4,16 +4,6 @@ import { usePathname } from 'next/navigation'
 import { Plus } from 'lucide-react'
 import { useLogModal } from './log-modal-context'
 
-/**
- * Routes where the mobile FAB hurts the UX — either because the page has its
- * own sticky action bar, or because the plus button is irrelevant context.
- */
-const HIDDEN_PATTERNS = [
-  '/settings',       // no temptation logging context here
-  '/profile',        // profile page — no logging context
-  '/groups/',        // group detail pages have their own action context
-]
-
 function shouldHideFab(pathname: string): boolean {
   // Exact match for /settings and /profile
   if (pathname === '/settings' || pathname === '/profile') return true

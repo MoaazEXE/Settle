@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { cn } from '@/lib/utils'
 
 const PALETTE = [
@@ -32,9 +33,11 @@ export function Avatar({ name, src, size = 32, shape = 'circle', className }: Pr
 
   if (src) {
     return (
-      <img
+      <Image
         src={src}
         alt={name}
+        width={size}
+        height={size}
         className={cn('inline-block object-cover', className)}
         style={{ width: size, height: size, borderRadius }}
         aria-hidden="true"

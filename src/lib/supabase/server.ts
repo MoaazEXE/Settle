@@ -37,35 +37,25 @@ export interface AuthUser {
 }
 
 /**
- * Per-request cached lookup of the authenticated user — LOCAL ONLY, no network.
+ * Per-request cached lookup of the authenticated user.
  *
- * Uses `getSession()` which reads the auth cookie via the SSR adapter and
- * returns the cached User. NO round-trip to Supabase Auth, so page renders
- * are fast.
+ * ─ Security boundary ─
+ * This is THE authentication boundary for the app. Every server action and
+ * server component must derive identity from this function (or one wrapping
+ * it) — never trust an id passed in from the client. The proxy in `proxy.ts`
+ * is a UX optimization that gates routes by cookie presence; it does not
+ * verify anything cryptographically.
  *
- * Trade-off: if a session is revoked server-side (sign-out elsewhere, password
- * change), this returns the stale user until the cookie refreshes. The proxy
- * already gates protected routes by cookie presence, and security-critical
- * mutations should call `verifyAuthUser()` below for a fresh server check.
+ * Implementation: calls `supabase.auth.getUser()` which contacts Supabase Auth
+ * to validate the JWT (so revoked sessions and forged cookies are rejected).
+ * Wrapped in React `cache()` so the network cost is paid at most once per
+ * request, regardless of how many components call it.
+ *
+ * Prisma queries run as the Postgres owner and bypass RLS, so the RLS
+ * policies are defense in depth only — application-layer guards built on top
+ * of this function are the real enforcement.
  */
 export const getCurrentUser = cache(async (): Promise<AuthUser | null> => {
-  const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  const user = session?.user
-  if (!user) return null
-  return {
-    id: user.id,
-    email: user.email,
-    user_metadata: user.user_metadata,
-  }
-})
-
-/**
- * Strict authenticated-user lookup — network call to Supabase Auth.
- * Use this when you're about to perform a sensitive mutation and want to be
- * certain the session hasn't been revoked.
- */
-export const verifyAuthUser = cache(async (): Promise<AuthUser | null> => {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
@@ -75,3 +65,9 @@ export const verifyAuthUser = cache(async (): Promise<AuthUser | null> => {
     user_metadata: user.user_metadata,
   }
 })
+
+/**
+ * Alias kept for callers that previously distinguished "strict" verification.
+ * Now identical to `getCurrentUser` — both go through `getUser()`.
+ */
+export const verifyAuthUser = getCurrentUser

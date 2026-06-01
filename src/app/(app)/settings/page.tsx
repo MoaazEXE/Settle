@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { usersRepo } from '@/data/users.repo'
 import { getUserContext } from '@/lib/user-context'
 import { SettingsForm } from './_components/settings-form'
+import { DEFAULT_CURRENCY } from '@/lib/constants'
 
 export default async function SettingsPage() {
   const ctx = await getUserContext()
@@ -36,7 +37,7 @@ export default async function SettingsPage() {
             timeCostMode: dbUser?.timeCostMode ?? 'SIMPLE',
             commuteHours: dbUser?.commuteHours ?? null,
             workCostsCents: dbUser?.workCostsCents ?? null,
-            currency: dbUser?.currency ?? 'MYR',
+            currency: dbUser?.currency ?? DEFAULT_CURRENCY,
           }}
         />
       </div>

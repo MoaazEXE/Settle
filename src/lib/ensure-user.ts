@@ -1,5 +1,12 @@
 import { prisma } from '@/lib/prisma'
 
+export class AccountEmailCollisionError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'AccountEmailCollisionError'
+  }
+}
+
 const SAFE_AVATAR_HOSTS = new Set([
   'lh3.googleusercontent.com',
   'avatars.githubusercontent.com',
@@ -57,28 +64,18 @@ export async function ensureUserRecord(user: MinimalAuthUser): Promise<void> {
   } catch (e) {
     const code = (e as { code?: string })?.code
     if (code === 'P2002') {
-      // Email exists under a different auth UUID (e.g. email signup → Google OAuth).
-      // Group.createdBy and Expense.payerId have no cascade, so clean those up first.
-      const staleUsers = await prisma.user.findMany({
-        where: { email: user.email ?? '' },
-        select: { id: true },
-      })
-      for (const stale of staleUsers) {
-        await prisma.group.deleteMany({ where: { createdBy: stale.id } })
-        await prisma.expense.deleteMany({ where: { payerId: stale.id } })
-      }
-      await prisma.user.deleteMany({ where: { email: user.email ?? '' } })
-      await prisma.user.create({
-        data: {
-          id: user.id,
-          name,
-          email: user.email ?? '',
-          ...(googleAvatarUrl && { avatarUrl: googleAvatarUrl }),
-        },
-      })
-    } else {
-      throw e
+      // Email is already attached to a different auth UUID (e.g. user signed up
+      // with email/password, then later tried to sign in with Google using the
+      // same Gmail). Previous behavior here was to delete the prior account's
+      // groups + expenses — that silently destroyed user data and was
+      // exploitable. We now refuse and surface a recoverable error to the
+      // caller; the auth callback / sign-up flow is responsible for showing
+      // the user a "use your existing login method" message.
+      throw new AccountEmailCollisionError(
+        'This email is already linked to a different sign-in method on this account. Sign in with your original method to continue.',
+      )
     }
+    throw e
   }
 
   // Backfill Google avatar for users who already have a row but no avatar set

@@ -123,7 +123,6 @@ export function GroupsListShell({
       const k = kindOfNode(node)
       return k === 'me' || k === 'my-guest'
     }
-    const labelFor = (uid: string) => labelForNode(uid)
 
     const members: GroupMemberView[] = g.members.map(m => ({
       id: m.user.id,

@@ -2,12 +2,17 @@ import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { logError } from '@/lib/log-error'
+import { DEFAULT_CURRENCY, CSV_EXPORT_LIMIT } from '@/lib/constants'
 
 export const dynamic = 'force-dynamic'
 
 function esc(v: string | null | undefined): string {
   if (!v) return ''
-  const s = String(v)
+  let s = String(v)
+  // Prefix formula-injection triggers so spreadsheet apps treat the cell as text
+  if (s.length > 0 && '=+-@\t\r'.includes(s[0])) {
+    s = `'${s}`
+  }
   return s.includes(',') || s.includes('"') || s.includes('\n')
     ? `"${s.replace(/"/g, '""')}"`
     : s
@@ -26,7 +31,7 @@ export async function GET() {
     const csvOk = await consume(`csv:${user.id}`, 5, 3600).catch(() => true)
     if (!csvOk) return new NextResponse('Too many export requests — try again later.', { status: 429 })
 
-    const LIMIT = 10_000
+    const LIMIT = CSV_EXPORT_LIMIT
     const [items, expenses, dbUser] = await Promise.all([
       prisma.item.findMany({
         where: { userId: user.id },
@@ -44,7 +49,7 @@ export async function GET() {
       prisma.user.findUnique({ where: { id: user.id }, select: { currency: true } }),
     ])
 
-    const currencyCode = dbUser?.currency ?? 'MYR'
+    const currencyCode = dbUser?.currency ?? DEFAULT_CURRENCY
 
     const lines: string[] = []
 

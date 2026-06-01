@@ -47,7 +47,6 @@ export function ResolveSheet({ item, onClose, onSkipped }: Props) {
   const [pending, startTransition] = useTransition()
   const [mode, setMode] = useState<Mode>('resolve')
   const currency = useCurrency()
-  const currencySymbol = CURRENCIES.find(c => c.code === currency)?.symbol ?? currency
   const { markResolved } = useResolveSheet()
 
   function handleBuy() {

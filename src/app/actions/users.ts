@@ -4,7 +4,6 @@ import { redirect } from 'next/navigation'
 import { updateTag } from 'next/cache'
 import { getCurrentUser } from '@/lib/supabase/server'
 import { usersRepo } from '@/data/users.repo'
-import { prisma } from '@/lib/prisma'
 import {
   getCents,
   getOptionalNumber,
@@ -17,6 +16,7 @@ import { guard, consume } from '@/lib/rate-limit'
 import { validateUsername, normalizeUsername } from '@/lib/username'
 import type { TimeCostMode } from '@/types'
 import { CURRENCIES, type CurrencyCode } from '@/lib/formatters'
+import { DEFAULT_CURRENCY } from '@/lib/constants'
 
 const VALID_CURRENCIES: Set<string> = new Set(CURRENCIES.map(c => c.code))
 
@@ -134,7 +134,7 @@ export async function completeOnboarding(
     const existing = await usersRepo.findByUsername(username)
     if (existing && existing.id !== user.id) throw new ValidationError('Username was just taken — please choose another.')
 
-    const currency = getString(formData, 'currency') ?? 'MYR'
+    const currency = getString(formData, 'currency') ?? DEFAULT_CURRENCY
     if (!VALID_CURRENCIES.has(currency)) throw new ValidationError('Invalid currency.')
 
     const monthlyIncomeCents = getCents(formData, 'monthlyIncome')
@@ -212,7 +212,7 @@ export async function saveIncomeSettings(
       throw new ValidationError('Working hours must be a positive number.')
     }
 
-    const currency = getString(formData, 'currency') ?? 'MYR'
+    const currency = getString(formData, 'currency') ?? DEFAULT_CURRENCY
     if (!VALID_CURRENCIES.has(currency)) throw new ValidationError('Invalid currency.')
 
     await Promise.all([

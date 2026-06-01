@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { ensureUserRecord } from '@/lib/ensure-user'
+import { ensureUserRecord, AccountEmailCollisionError } from '@/lib/ensure-user'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function GET(request: NextRequest) {
@@ -26,6 +26,13 @@ export async function GET(request: NextRequest) {
     try {
       await ensureUserRecord(user)
     } catch (e) {
+      if (e instanceof AccountEmailCollisionError) {
+        // Sign the user out so the unverified provider session doesn't persist,
+        // then bounce back to /login with a clear error.
+        await supabase.auth.signOut().catch(() => {})
+        const params = new URLSearchParams({ error: e.message })
+        return NextResponse.redirect(`${origin}/login?${params.toString()}`)
+      }
       console.error('[auth/callback] ensureUserRecord failed:', e)
     }
   }

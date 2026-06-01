@@ -327,12 +327,12 @@ function PaymentRow({
       type="button"
       onClick={onToggle}
       className={cn(
-        'w-full flex items-center gap-3 px-4 py-3.5 transition-colors text-left',
+        'w-full flex items-center gap-2 sm:gap-3 px-4 py-3.5 transition-colors text-left',
         checked ? 'bg-primary-tint/40' : 'hover:bg-muted',
         !last && 'border-b border-sep',
       )}
     >
-      <div className="flex items-center gap-2 flex-shrink-0 min-w-0">
+      <div className="flex items-center gap-2 min-w-0 flex-auto sm:flex-none">
         <Avatar name={row.fromLabel} src={row.fromAvatarUrl} size={36} />
         <div className="flex flex-col min-w-0">
           <p className="text-sm font-semibold text-foreground truncate">
@@ -348,7 +348,7 @@ function PaymentRow({
       <div className="w-7 h-7 rounded-full bg-primary-tint text-primary flex items-center justify-center flex-shrink-0">
         <ArrowRight size={14} strokeWidth={2} />
       </div>
-      <div className="flex items-center gap-2 flex-shrink-0 min-w-0">
+      <div className="flex items-center gap-2 min-w-0 flex-auto sm:flex-none">
         <Avatar name={row.toLabel} src={row.toAvatarUrl} size={36} />
         <div className="flex flex-col min-w-0">
           <p className="text-sm font-semibold text-foreground truncate">
