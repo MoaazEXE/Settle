@@ -122,3 +122,4 @@ Deeper docs live in [`/docs`](docs/):
 - [**SETUP.md**](docs/SETUP.md) — full local setup and the production deployment checklist.
 - [**ROADMAP.md**](docs/ROADMAP.md) — what's shipped, what's deferred, and what's next.
 - [**AUDIT.md**](docs/AUDIT.md) — production-readiness audit (security, scalability, performance).
+- [**SUBMISSION_NOTES.md**](docs/SUBMISSION_NOTES.md) — the idea, decisions, feature deep-dives, and challenges (challenge writeup material).
