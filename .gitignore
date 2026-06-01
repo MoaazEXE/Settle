@@ -32,6 +32,8 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# ...but keep the committed template so others can bootstrap
+!.env.example
 
 # vercel
 .vercel
@@ -42,9 +44,7 @@ next-env.d.ts
 
 # prisma
 /src/generated/
+
+# AI-agent tooling config (auto-discovered at repo root; not project docs)
 CLAUDE.md
 AGENTS.md
-
-IMPROVEMENTS.md
-
-Settle/scripts/backfill-usernames.sql
