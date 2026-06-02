@@ -5,7 +5,7 @@ A personal finance app that **intervenes before the money leaves**. Log temptati
 Built for the Shortcut Asia Internship Challenge 2026 (23 May – 2 June).
 
 - **🔗 Live app:** https://settle-moexe.vercel.app/
-- **🎥 Demo video:** <!-- TODO: add link --> _coming soon — to be added before submission_
+- **🎥 Demo video:** https://drive.google.com/file/d/1eXR0KqsVkCT6Y7Y_9lGTyy8io07zskRE/view?usp=sharing
 
 ## Core features
 
