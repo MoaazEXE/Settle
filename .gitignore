@@ -48,3 +48,5 @@ next-env.d.ts
 # AI-agent tooling config (auto-discovered at repo root; not project docs)
 CLAUDE.md
 AGENTS.md
+.claude/
+.cursor/

@@ -46,7 +46,7 @@ Fill in `.env.local` with your Supabase project credentials. The app will not bo
 npx prisma db push
 ```
 
-This project does not currently keep a `prisma/migrations/` history — schema state is driven by `prisma/schema.prisma` and `db push`. Initializing a proper migration history is on the [docs/AUDIT.md](docs/AUDIT.md) list before going to real production.
+This project does not currently keep a `prisma/migrations/` history — schema state is driven by `prisma/schema.prisma` and `db push`. Initializing a proper migration history is on the [roadmap](docs/ROADMAP.md) before going to real production.
 
 ### 4. Apply Row-Level Security
 
@@ -121,5 +121,3 @@ Deeper docs live in [`/docs`](docs/):
 - [**DECISIONS.md**](docs/DECISIONS.md) — the "why" behind the key technical decisions.
 - [**SETUP.md**](docs/SETUP.md) — full local setup and the production deployment checklist.
 - [**ROADMAP.md**](docs/ROADMAP.md) — what's shipped, what's deferred, and what's next.
-- [**AUDIT.md**](docs/AUDIT.md) — production-readiness audit (security, scalability, performance).
-- [**SUBMISSION_NOTES.md**](docs/SUBMISSION_NOTES.md) — the idea, decisions, feature deep-dives, and challenges (challenge writeup material).

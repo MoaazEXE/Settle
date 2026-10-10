@@ -91,6 +91,3 @@ windows.
 - **No dark mode** — out of scope for the deadline.
 - **No premature pagination/perf rework** beyond an interim 200-row cap on the
   heaviest query; the app is fast enough at demo scale.
-
-A fuller record of findings, severities, and resolutions lives in
-[AUDIT.md](./AUDIT.md).
